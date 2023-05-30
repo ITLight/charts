@@ -58,7 +58,7 @@ relay:
   probeInitialDelaySeconds: 10
   probePeriodSeconds: 10
   probeSuccessThreshold: 1
-  probeTimeoutSeconds: 2
+  probeTimeoutSeconds: 10
   resources: {}
   affinity: {}
   nodeSelector: {}
@@ -102,12 +102,15 @@ sentry:
     probeInitialDelaySeconds: 10
     probePeriodSeconds: 10
     probeSuccessThreshold: 1
-    probeTimeoutSeconds: 2
+    probeTimeoutSeconds: 10
     resources: {}
     affinity: {}
     nodeSelector: {}
     securityContext: {}
     service:
+      type: LoadBalancer
+      externalPort: 9001
+      internalPort: 9001
       annotations: {}
     # tolerations: []
     # podLabels: []
@@ -149,7 +152,7 @@ sentry:
     livenessProbe:
       enabled: false
       periodSeconds: 60
-      timeoutSeconds: 10
+      timeoutSeconds: 20
       failureThreshold: 3
     sidecars: []
     volumes: []
@@ -389,9 +392,9 @@ snuba:
     env: []
     probeInitialDelaySeconds: 10
     liveness:
-      timeoutSeconds: 2
+      timeoutSeconds: 6
     readiness:
-      timeoutSeconds: 2
+      timeoutSeconds: 6
     resources: {}
     affinity: {}
     nodeSelector: {}
@@ -612,7 +615,7 @@ snuba:
 hooks:
   enabled: true
   removeOnSuccess: true
-  activeDeadlineSeconds: 100
+  activeDeadlineSeconds: 1000
   shareProcessNamespace: false
   dbCheck:
     image:
@@ -817,14 +820,14 @@ nginx:
   #   name: nginx
 
 ingress:
-  enabled: false
+  enabled: true
   # If you are using traefik ingress controller, switch this to 'traefik'
   # if you are using AWS ALB Ingress controller, switch this to 'aws-alb'
   # if you are using GKE Ingress controller, switch this to 'gke'
   regexPathStyle: nginx
   # If you are using AWS ALB Ingress controller, switch to true if you want activate the http to https redirection.
   alb:
-    httpRedirect: false
+    httpRedirect: true
   # annotations:
   #   If you are using nginx ingress controller, please use at least those 2 annotations
   #   kubernetes.io/ingress.class: nginx
@@ -906,7 +909,7 @@ config:
 clickhouse:
   enabled: true
   clickhouse:
-    imageVersion: "20.12.8.5"
+    imageVersion: "21.12.4.1-alpine"
     configmap:
       remote_servers:
         internal_replication: true
@@ -972,12 +975,143 @@ externalClickhouse:
 zookeeper:
   enabled: true
   nameOverride: zookeeper-clickhouse
-  replicaCount: 3
+  replicaCount: 1
 
 # Settings for Kafka.
 # See https://github.com/bitnami/charts/tree/master/bitnami/kafka
 kafka:
   enabled: true
+  replicas: 3
+#  image: "confluentinc/cp-kafka"
+
+  ## The kafka image tag
+#  imageTag: "5.0.1"  # Confluent image for Kafka 2.0.0
+
+  ## Specify a imagePullPolicy
+  ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+  imagePullPolicy: "IfNotPresent"
+
+  ## Configure resource requests and limits
+  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  resources: { }
+    # limits:
+    #   cpu: 200m
+    #   memory: 1536Mi
+    # requests:
+  #   cpu: 100m
+  #   memory: 1024Mi
+  kafkaHeapOptions: "-Xmx1G -Xms1G"
+
+  ## Optional Container Security context
+  securityContext: { }
+
+  ## The StatefulSet Update Strategy which Kafka will use when changes are applied.
+  ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
+#  updateStrategy:
+#    type: "OnDelete"
+
+  ## Start and stop pods in Parallel or OrderedReady (one-by-one.)  Note - Can not change after first release.
+  ## ref: https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/#pod-management-policy
+  podManagementPolicy: OrderedReady
+
+  ## Useful if using any custom authorizer
+  ## Pass in some secrets to use (if required)
+  # secrets:
+  # - name: myKafkaSecret
+  #   keys:
+  #     - username
+  #     - password
+  #   # mountPath: /opt/kafka/secret
+  # - name: myZkSecret
+  #   keys:
+  #     - user
+  #     - pass
+  #   mountPath: /opt/zookeeper/secret
+
+
+  ## The subpath within the Kafka container's PV where logs will be stored.
+  ## This is combined with `persistence.mountPath`, to create, by default: /opt/kafka/data/logs
+  logSubPath: "logs"
+
+  ## Use an alternate scheduler, e.g. "stork".
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  # schedulerName:
+
+  ## Use an alternate serviceAccount
+  ## Useful when using images in custom repositories
+  # serviceAccountName:
+
+  ## Set a pod priorityClassName
+  # priorityClassName: high-priority
+
+  ## Pod scheduling preferences (by default keep pods within a release on separate nodes).
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## By default we don't set affinity
+  affinity: { }
+  ## Alternatively, this typical example defines:
+  ## antiAffinity (to keep Kafka pods on separate pods)
+  ## and affinity (to encourage Kafka pods to be collocated with Zookeeper pods)
+  # affinity:
+  #   podAntiAffinity:
+  #     requiredDuringSchedulingIgnoredDuringExecution:
+  #     - labelSelector:
+  #         matchExpressions:
+  #         - key: app
+  #           operator: In
+  #           values:
+  #           - kafka
+  #       topologyKey: "kubernetes.io/hostname"
+  #   podAffinity:
+  #     preferredDuringSchedulingIgnoredDuringExecution:
+  #      - weight: 50
+  #        podAffinityTerm:
+  #          labelSelector:
+  #            matchExpressions:
+  #            - key: app
+  #              operator: In
+  #              values:
+  #                - zookeeper
+  #          topologyKey: "kubernetes.io/hostname"
+
+  ## Node labels for pod assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+  nodeSelector: { }
+
+  ## Readiness probe config.
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
+  ##
+  readinessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+
+  ## Period to wait for broker graceful shutdown (sigterm) before pod is killed (sigkill)
+  ## ref: https://kubernetes-v1-4.github.io/docs/user-guide/production-pods/#lifecycle-hooks-and-termination-notice
+  ## ref: https://kafka.apache.org/10/documentation.html#brokerconfigs controlled.shutdown.*
+  terminationGracePeriodSeconds: 60
+
+  # Tolerations for nodes that have taints on them.
+  # Useful if you want to dedicate nodes to just run kafka
+  # https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  tolerations: [ ]
+  # tolerations:
+  # - key: "key"
+  #   operator: "Equal"
+  #   value: "value"
+  #   effect: "NoSchedule"
+
+  ## Headless service.
+  ##
+  headless:
+    # annotations:
+    # targetPort:
+    port: 9092
+
+  ## External access.
+  ##
   replicaCount: 3
   allowPlaintextListener: true
   defaultReplicationFactor: 3
@@ -988,10 +1122,76 @@ kafka:
   maxMessageBytes: "50000000"
   # 50 MB
   socketRequestMaxBytes: "50000000"
-
+  kraft:
+    enabled: false
   service:
+    type: ClusterIP
     ports:
       client: 9092
+      controller: 9093
+      internal: 9094
+      external: 9095
+    externalTrafficPolicy: Cluster
+  containerPorts:
+    client: 9092
+    controller: 9093
+    internal: 9094
+    external: 9095
+  config: ""
+  listeners: []
+  hostNetwork: false
+  initContainers: []
+  externalAccess:
+    enabled: true
+    service:
+      type: NodePort
+    autoDiscovery:
+      enabled: true
+  serviceAccount:
+    create: true
+  rbac:
+    create: true
+  jmx:
+    ## Rules to apply to the Prometheus JMX Exporter.  Note while lots of stats have been cleaned and exposed,
+    ## there are still more stats to clean up and expose, others will never get exposed.  They keep lots of duplicates
+    ## that can be derived easily.  The configMap in this chart cleans up the metrics it exposes to be in a Prometheus
+    ## format, eg topic, broker are labels and not part of metric name. Improvements are gladly accepted and encouraged.
+    configMap:
+
+      ## Allows disabling the default configmap, note a configMap is needed
+      enabled: true
+
+      ## Allows setting values to generate confimap
+      ## To allow all metrics through (warning its crazy excessive) comment out below `overrideConfig` and set
+      ## `whitelistObjectNames: []`
+      overrideConfig: { }
+        # jmxUrl: service:jmx:rmi:///jndi/rmi://127.0.0.1:5555/jmxrmi
+        # lowercaseOutputName: true
+        # lowercaseOutputLabelNames: true
+        # ssl: false
+      # rules:
+      # - pattern: ".*"
+
+      ## If you would like to supply your own ConfigMap for JMX metrics, supply the name of that
+      ## ConfigMap as an `overrideName` here.
+      overrideName: ""
+
+    ## Port the jmx metrics are exposed in native jmx format, not in Prometheus format
+    port: 5555
+
+    ## JMX Whitelist Objects, can be set to control which JMX metrics are exposed.  Only whitelisted
+    ## values will be exposed via JMX Exporter.  They must also be exposed via Rules.  To expose all metrics
+    ## (warning its crazy excessive and they aren't formatted in a prometheus style) (1) `whitelistObjectNames: []`
+    ## (2) commented out above `overrideConfig`.
+    whitelistObjectNames: # []
+      - kafka.controller:*
+      - kafka.server:*
+      - java.lang:*
+      - kafka.network:*
+      - kafka.log:*
+
+  ## Prometheus Exporters / Metrics
+  ##
 
   ## Use this to enable an extra service account
   # serviceAccount:
@@ -1003,13 +1203,33 @@ kafka:
   #   serviceAccount:
   #     create: false
   #     name: zookeeper
+  configJob:
+    ## Specify the number of retries before considering kafka-config job as failed.
+    ## https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#pod-backoff-failure-policy
+    backoffLimit: 6
+
+  ## Topic creation and configuration.
+  ## The job will be run on a deployment only when the config has been changed.
+  ## - If 'partitions' and 'replicationFactor' are specified we create the topic (with --if-not-exists.)
+  ## - If 'partitions', 'replicationFactor' and 'reassignPartitions' are specified we reassign the partitions to
+  ## increase the replication factor of an existing topic.
+  ## - If 'partitions' is specified we 'alter' the number of partitions. This will
+  ## silently and safely fail if the new setting isn’t strictly larger than the old (i.e. a NOOP.) Do be aware of the
+  ## implications for keyed topics (ref: https://docs.confluent.io/current/kafka/post-deployment.html#admin-operations)
+  ## - If 'defaultConfig' is specified it's deleted from the topic configuration. If it isn't present,
+  ## it will silently and safely fail.
+  ## - If 'config' is specified it's added to the topic configuration.
+  ##
+  ## Note: To increase the 'replicationFactor' of a topic, 'reassignPartitions' must be set to true (see above).
+  ##
+  topics: [ ]
 
 ## This value is only used when kafka.enabled is set to false
 ##
 externalKafka:
   ## Hostname or ip address of external kafka
   ##
-  # host: "kafka-confluent"
+  host: 10.22.0.42
   port: 9092
 
 sourcemaps:
@@ -1049,7 +1269,7 @@ postgresql:
     database: sentry
   replication:
     enabled: false
-    readReplicas: 2
+    readReplicas: 1
     synchronousCommit: "on"
     numSynchronousReplicas: 1
     applicationName: sentry
@@ -1078,7 +1298,7 @@ rabbitmq:
   clustering:
     forceBoot: true
     rebalance: true
-  replicaCount: 3
+  replicaCount: 1
   auth:
     erlangCookie: pHgpy3Q6adTskzAT6bLHCFqFTF7lMxhA
     username: guest
@@ -1164,14 +1384,14 @@ metrics:
     enabled: true
     initialDelaySeconds: 30
     periodSeconds: 5
-    timeoutSeconds: 2
+    timeoutSeconds: 10
     failureThreshold: 3
     successThreshold: 1
   readinessProbe:
     enabled: true
     initialDelaySeconds: 30
     periodSeconds: 5
-    timeoutSeconds: 2
+    timeoutSeconds: 10
     failureThreshold: 3
     successThreshold: 1
 
