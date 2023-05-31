@@ -670,7 +670,8 @@ hooks:
     # tolerations: []
     # volumes: []
     # volumeMounts: []
-  snubaMigrate: {}
+  snubaMigrate:
+    {}
     # podLabels: []
     # volumes: []
     # volumeMounts: []
@@ -877,7 +878,8 @@ filestore:
       ## be used
       existingClaim: ""
 
-  gcs: {}
+  gcs:
+    {}
     ## Point this at a pre-configured secret containing a service account. The resulting
     ## secret will be mounted at /var/run/secrets/google
     # secretName:
@@ -907,9 +909,13 @@ config:
     httpKeepalive: 15
 
 clickhouse:
-  enabled: true
+  enabled: false
+  username: default
+  password: ""
   clickhouse:
-    imageVersion: "21.12.4.1-alpine"
+    username: default
+    password: ""
+    imageVersion: "21.8.6.15-alpine"
     configmap:
       remote_servers:
         internal_replication: true
@@ -923,7 +929,7 @@ clickhouse:
             hostTemplate: "{{ .Release.Name }}-zookeeper-clickhouse"
             port: "2181"
       users:
-        enabled: false
+        enabled: true
         user:
           # the first user will be used if enabled
           - name: default
@@ -975,25 +981,23 @@ externalClickhouse:
 zookeeper:
   enabled: true
   nameOverride: zookeeper-clickhouse
-  replicaCount: 1
+  replicaCount: 3
 
 # Settings for Kafka.
 # See https://github.com/bitnami/charts/tree/master/bitnami/kafka
 kafka:
-  enabled: true
+  enabled: false
   replicas: 3
-#  image: "confluentinc/cp-kafka"
+  #  image: "confluentinc/cp-kafka"
 
   ## The kafka image tag
-#  imageTag: "5.0.1"  # Confluent image for Kafka 2.0.0
+  #  imageTag: "5.0.1"  # Confluent image for Kafka 2.0.0
 
   ## Specify a imagePullPolicy
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
   imagePullPolicy: "IfNotPresent"
-
-  ## Configure resource requests and limits
-  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
-  resources: { }
+  resources:
+    {}
     # limits:
     #   cpu: 200m
     #   memory: 1536Mi
@@ -1003,111 +1007,20 @@ kafka:
   kafkaHeapOptions: "-Xmx1G -Xms1G"
 
   ## Optional Container Security context
-  securityContext: { }
-
-  ## The StatefulSet Update Strategy which Kafka will use when changes are applied.
-  ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
-#  updateStrategy:
-#    type: "OnDelete"
-
-  ## Start and stop pods in Parallel or OrderedReady (one-by-one.)  Note - Can not change after first release.
-  ## ref: https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/#pod-management-policy
+  securityContext: {}
   podManagementPolicy: OrderedReady
-
-  ## Useful if using any custom authorizer
-  ## Pass in some secrets to use (if required)
-  # secrets:
-  # - name: myKafkaSecret
-  #   keys:
-  #     - username
-  #     - password
-  #   # mountPath: /opt/kafka/secret
-  # - name: myZkSecret
-  #   keys:
-  #     - user
-  #     - pass
-  #   mountPath: /opt/zookeeper/secret
-
-
-  ## The subpath within the Kafka container's PV where logs will be stored.
-  ## This is combined with `persistence.mountPath`, to create, by default: /opt/kafka/data/logs
   logSubPath: "logs"
-
-  ## Use an alternate scheduler, e.g. "stork".
-  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
-  ##
-  # schedulerName:
-
-  ## Use an alternate serviceAccount
-  ## Useful when using images in custom repositories
-  # serviceAccountName:
-
-  ## Set a pod priorityClassName
-  # priorityClassName: high-priority
-
-  ## Pod scheduling preferences (by default keep pods within a release on separate nodes).
-  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
-  ## By default we don't set affinity
-  affinity: { }
-  ## Alternatively, this typical example defines:
-  ## antiAffinity (to keep Kafka pods on separate pods)
-  ## and affinity (to encourage Kafka pods to be collocated with Zookeeper pods)
-  # affinity:
-  #   podAntiAffinity:
-  #     requiredDuringSchedulingIgnoredDuringExecution:
-  #     - labelSelector:
-  #         matchExpressions:
-  #         - key: app
-  #           operator: In
-  #           values:
-  #           - kafka
-  #       topologyKey: "kubernetes.io/hostname"
-  #   podAffinity:
-  #     preferredDuringSchedulingIgnoredDuringExecution:
-  #      - weight: 50
-  #        podAffinityTerm:
-  #          labelSelector:
-  #            matchExpressions:
-  #            - key: app
-  #              operator: In
-  #              values:
-  #                - zookeeper
-  #          topologyKey: "kubernetes.io/hostname"
-
-  ## Node labels for pod assignment
-  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
-  nodeSelector: { }
-
-  ## Readiness probe config.
-  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
-  ##
+  affinity: {}
+  nodeSelector: {}
   readinessProbe:
     initialDelaySeconds: 30
     periodSeconds: 10
     timeoutSeconds: 5
     successThreshold: 1
     failureThreshold: 3
-
-  ## Period to wait for broker graceful shutdown (sigterm) before pod is killed (sigkill)
-  ## ref: https://kubernetes-v1-4.github.io/docs/user-guide/production-pods/#lifecycle-hooks-and-termination-notice
-  ## ref: https://kafka.apache.org/10/documentation.html#brokerconfigs controlled.shutdown.*
   terminationGracePeriodSeconds: 60
-
-  # Tolerations for nodes that have taints on them.
-  # Useful if you want to dedicate nodes to just run kafka
-  # https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
-  tolerations: [ ]
-  # tolerations:
-  # - key: "key"
-  #   operator: "Equal"
-  #   value: "value"
-  #   effect: "NoSchedule"
-
-  ## Headless service.
-  ##
+  tolerations: []
   headless:
-    # annotations:
-    # targetPort:
     port: 9092
 
   ## External access.
@@ -1157,14 +1070,14 @@ kafka:
     ## that can be derived easily.  The configMap in this chart cleans up the metrics it exposes to be in a Prometheus
     ## format, eg topic, broker are labels and not part of metric name. Improvements are gladly accepted and encouraged.
     configMap:
-
       ## Allows disabling the default configmap, note a configMap is needed
       enabled: true
 
       ## Allows setting values to generate confimap
       ## To allow all metrics through (warning its crazy excessive) comment out below `overrideConfig` and set
       ## `whitelistObjectNames: []`
-      overrideConfig: { }
+      overrideConfig:
+        {}
         # jmxUrl: service:jmx:rmi:///jndi/rmi://127.0.0.1:5555/jmxrmi
         # lowercaseOutputName: true
         # lowercaseOutputLabelNames: true
@@ -1207,29 +1120,14 @@ kafka:
     ## Specify the number of retries before considering kafka-config job as failed.
     ## https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#pod-backoff-failure-policy
     backoffLimit: 6
-
-  ## Topic creation and configuration.
-  ## The job will be run on a deployment only when the config has been changed.
-  ## - If 'partitions' and 'replicationFactor' are specified we create the topic (with --if-not-exists.)
-  ## - If 'partitions', 'replicationFactor' and 'reassignPartitions' are specified we reassign the partitions to
-  ## increase the replication factor of an existing topic.
-  ## - If 'partitions' is specified we 'alter' the number of partitions. This will
-  ## silently and safely fail if the new setting isn’t strictly larger than the old (i.e. a NOOP.) Do be aware of the
-  ## implications for keyed topics (ref: https://docs.confluent.io/current/kafka/post-deployment.html#admin-operations)
-  ## - If 'defaultConfig' is specified it's deleted from the topic configuration. If it isn't present,
-  ## it will silently and safely fail.
-  ## - If 'config' is specified it's added to the topic configuration.
-  ##
-  ## Note: To increase the 'replicationFactor' of a topic, 'reassignPartitions' must be set to true (see above).
-  ##
-  topics: [ ]
+  topics: []
 
 ## This value is only used when kafka.enabled is set to false
 ##
 externalKafka:
   ## Hostname or ip address of external kafka
   ##
-  host: 10.22.0.42
+  host: kafka-headless.default
   port: 9092
 
 sourcemaps:
@@ -1263,7 +1161,7 @@ externalRedis:
   # password: redis
 
 postgresql:
-  enabled: true
+  enabled: false
   nameOverride: sentry-postgresql
   auth:
     database: sentry
@@ -1281,10 +1179,10 @@ postgresql:
 ## Set either externalPostgresql.password or externalPostgresql.existingSecret to configure password
 ## externalPostgresql.existingSecret should have a key of 'postgres-password' which holds the password
 externalPostgresql:
-  # host: postgres
+  host: postgresql-ha-postgresql-headless.default
   port: 5432
   username: postgres
-  # password: postgres
+  password: postgres
   # existingSecret: secret-name
   ## set existingSecretKey if key name inside existingSecret is different from 'postgres-password'
   # existingSecretKey: secret-key-name
@@ -1298,7 +1196,7 @@ rabbitmq:
   clustering:
     forceBoot: true
     rebalance: true
-  replicaCount: 1
+  replicaCount: 2
   auth:
     erlangCookie: pHgpy3Q6adTskzAT6bLHCFqFTF7lMxhA
     username: guest
@@ -1310,7 +1208,8 @@ rabbitmq:
   persistence:
     enabled: true
   resources: {}
-  memoryHighWatermark: {}
+  memoryHighWatermark:
+    {}
     # enabled: true
     # type: relative
     # value: 0.4
@@ -1435,7 +1334,6 @@ metrics:
     # honorLabels: true
 
 revisionHistoryLimit: 10
-
 # dnsPolicy: "ClusterFirst"
 # dnsConfig:
 #   nameservers: []
