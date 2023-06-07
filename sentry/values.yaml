@@ -700,7 +700,7 @@ mail:
   from: ""
 
 symbolicator:
-  enabled: false
+  enabled: true
   api:
     replicas: 1
     env: []
