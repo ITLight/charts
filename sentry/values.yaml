@@ -2,8 +2,8 @@ prefix:
 
 user:
   create: true
-  email: admin@sentry.local
-  password: aaaa
+  email: vinhlv@sgvn.com
+  password: 123
 
   ## set this value to an existingSecret name to create the admin user with the password in the secret
   # existingSecret: sentry-admin-password
@@ -815,6 +815,11 @@ nginx:
     type: ClusterIP
     ports:
       http: 80
+  ingress:
+    kubernetes.io/enable-cors: "true"
+    kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS"
+    kubernetes.io/cors-allow-origin: "http://localhost:5173"
+    kubernetes.io/cors-allow-credentials: "true"
   ## Use this to enable an extra service account
   # serviceAccount:
   #   create: false
@@ -910,8 +915,6 @@ config:
 
 clickhouse:
   enabled: false
-  username: default
-  password: ""
   clickhouse:
     username: default
     password: ""
@@ -1166,7 +1169,7 @@ postgresql:
   auth:
     database: sentry
   replication:
-    enabled: false
+    enabled: true
     readReplicas: 1
     synchronousCommit: "on"
     numSynchronousReplicas: 1
@@ -1179,10 +1182,10 @@ postgresql:
 ## Set either externalPostgresql.password or externalPostgresql.existingSecret to configure password
 ## externalPostgresql.existingSecret should have a key of 'postgres-password' which holds the password
 externalPostgresql:
-  host: postgresql-ha-postgresql-headless.default
+  host: postgresql-primary
   port: 5432
   username: postgres
-  password: postgres
+  password: e9hEURDeQH
   # existingSecret: secret-name
   ## set existingSecretKey if key name inside existingSecret is different from 'postgres-password'
   # existingSecretKey: secret-key-name

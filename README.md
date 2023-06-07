@@ -14,23 +14,22 @@ Big thanks to the maintainers of the [deprecated chart](https://github.com/helm/
 
 For now the full list of values is not documented but you can get inspired by the values.yaml specific to each directory.
 
-
 ## Upgrading from 18.x.x version of this Chart to 19.x.x
 
-Chart dependencies has been upgraded because of sentry requirements. 
+Chart dependencies has been upgraded because of sentry requirements.
 Changes:
+
 - The minimum required version of Postgresql is 14.5 (works with 15.x too)
 
 Bumped dependencies:
-- postgresql > 12.5.1 - latest wersion of chart with postgres 15
 
+- postgresql > 12.5.1 - latest wersion of chart with postgres 15
 
 ## Upgrading from 17.x.x version of this Chart to 18.x.x
 
-If Kafka is complaining about unknown or missing topic, please connect to kafka-0 and run 
+If Kafka is complaining about unknown or missing topic, please connect to kafka-0 and run
 
-`/opt/bitnami/kafka/bin/kafka-topics.sh --create --topic ingest-replay-recordings --bootstrap-server localhost:9092`
-
+`/bin/kafka-topics --create --topic ingest-replay-recordings --bootstrap-server localhost:9092`
 
 ## Upgrading from 16.x.x version of this Chart to 17.x.x
 
@@ -43,25 +42,25 @@ You can delete the deployment "sentry-post-process-forward" as it's no longer ne
 `sentry-worker` may failed to start by [#774](https://github.com/sentry-kubernetes/charts/issues/774).
 If you encountered this issue, please reset `counters-0`, `triggers-0` queues.
 
-
 ## Upgrading from 15.x.x version of this Chart to 16.x.x
 
 system.secret-key is removed
 
 See https://github.com/sentry-kubernetes/charts/tree/develop/sentry#sentry-secret-key
 
-
 ## Upgrading from 14.x.x version of this Chart to 15.x.x
 
-Chart dependencies has been upgraded because of bitnami charts removal. 
+Chart dependencies has been upgraded because of bitnami charts removal.
 Changes:
+
 - `nginx.service.port: 80` > `nginx.service.ports.http: 80`
 - `kafka.service.port` > `kafka.service.ports.client`
 
 Bumped dependencies:
+
 - redis > 16.12.1 - latest version of chart
 - kafka > 16.3.2 - chart aligned with zookeeper dependency, upgraded kafka to 3.11
-- rabbit > 8.32.2 - latest 3.9.* image version of chart
+- rabbit > 8.32.2 - latest 3.9.\* image version of chart
 - postgresql > 10.16.2 - latest wersion of chart with postgres 11
 - nginx > 12.0.4 - latest version of chart
 
@@ -71,7 +70,6 @@ ClickHouse was reconfigured with sharding and replication in-mind, If you are us
 
 **WARNING**: You will lose current event data<br>
 Otherwise, you should delete the old ClickHouse volumes in-order to upgrade to this version.
-
 
 ## Upgrading from 12.x.x version of this Chart to 13.0.0
 
@@ -100,7 +98,6 @@ relay:
       alb.ingress.kubernetes.io/healthcheck-path: /api/relay/healthcheck/ready/
       alb.ingress.kubernetes.io/healthcheck-port: traffic-port
 ```
-
 
 ## Upgrading from 10.x.x version of this Chart to 11.0.0
 
@@ -145,6 +142,7 @@ If you are using `additionalHostNames` the `nginx.ingress.kubernetes.io/upstream
 It sets the `Host` header to the value you provide to avoid CSRF issues.
 
 ### Letsencrypt on NGINX Ingress Controller
+
 ```
 nginx:
   ingress:

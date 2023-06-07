@@ -26,9 +26,9 @@ global:
     ##
     auth:
       postgresPassword: ""
-      username: ""
-      password: ""
-      database: ""
+      username: "postgres"
+      password: "postgres"
+      database: "sentry"
       existingSecret: ""
       secretKeys:
         adminPasswordKey: ""
@@ -38,7 +38,7 @@ global:
     ##
     service:
       ports:
-        postgresql: ""
+        postgresql: 5432
 
 ## @section Common parameters
 ##
@@ -127,13 +127,13 @@ auth:
   postgresPassword: ""
   ## @param auth.username Name for a custom user to create
   ##
-  username: ""
+  username: "postgres"
   ## @param auth.password Password for the custom user to create. Ignored if `auth.existingSecret` is provided
   ##
-  password: ""
+  password: "postgres"
   ## @param auth.database Name for a custom database to create
   ##
-  database: ""
+  database: "sentry"
   ## @param auth.replicationUsername Name of the replication user
   ##
   replicationUsername: repl_user
@@ -156,7 +156,7 @@ auth:
   usePasswordFiles: false
 ## @param architecture PostgreSQL architecture (`standalone` or `replication`)
 ##
-architecture: standalone
+architecture: replication
 ## Replication configuration
 ## Ignored if `architecture` is `standalone`
 ##
@@ -165,11 +165,11 @@ replication:
   ## @param replication.numSynchronousReplicas Number of replicas that will have synchronous replication. Note: Cannot be greater than `readReplicas.replicaCount`.
   ## ref: https://www.postgresql.org/docs/current/runtime-config-wal.html#GUC-SYNCHRONOUS-COMMIT
   ##
-  synchronousCommit: "off"
-  numSynchronousReplicas: 0
+  synchronousCommit: "on"
+  numSynchronousReplicas: 1
   ## @param replication.applicationName Cluster application name. Useful for advanced replication settings
   ##
-  applicationName: my_application
+  applicationName: sentry-postgresql
 ## @param containerPorts.postgresql PostgreSQL container port
 ##
 containerPorts:
@@ -186,9 +186,9 @@ containerPorts:
 ## @param audit.logTimezone Timezone for the log timestamps
 ##
 audit:
-  logHostname: false
-  logConnections: false
-  logDisconnections: false
+  logHostname: true
+  logConnections: true
+  logDisconnections: true
   pgAuditLog: ""
   pgAuditLogCatalog: "off"
   clientMinMessages: error

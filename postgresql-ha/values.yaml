@@ -31,9 +31,9 @@ global:
     username: "postgres"
     password: "postgres"
     database: "sentry"
-    repmgrUsername: "repmgr"
+    repmgrUsername: ""
     repmgrPassword: ""
-    repmgrDatabase: "repmgr"
+    repmgrDatabase: ""
     existingSecret: ""
   ldap:
     bindpw: ""
@@ -129,12 +129,12 @@ postgresql:
   serviceAnnotations: {}
   ## @param postgresql.replicaCount Number of replicas to deploy. Use an odd number. Having 3 replicas is the minimum to get quorum when promoting a new primary.
   ##
-  replicaCount: 3
+  replicaCount: 1
   ## @param postgresql.updateStrategy.type Postgresql statefulset strategy type
   ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
   ## e.g:
-  ## updateStrategy:
-  ##  type: RollingUpdate
+  # updateStrategy:
+  #  type: RollingUpdate
   ##  rollingUpdate:
   ##    maxSurge: 25%
   ##    maxUnavailable: 25%
@@ -414,9 +414,9 @@ postgresql:
   ## @param postgresql.repmgrChildNodesConnectedMinCount Repmgr minimum number of connected child nodes before being considered as failed primary for fencing
   ## @param postgresql.repmgrChildNodesDisconnectTimeout Repmgr time before node will be fenced when insufficient child nodes are detected (in seconds)
   ##
-  repmgrUsername: repmgr
+  repmgrUsername: ""
   repmgrPassword: ""
-  repmgrDatabase: repmgr
+  repmgrDatabase: ""
   repmgrLogLevel: NOTICE
   repmgrConnectTimeout: 5
   repmgrReconnectAttempts: 2
